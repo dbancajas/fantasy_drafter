@@ -15,6 +15,8 @@ typedef vector<vector<int> >::size_type vvint_sz;
 typedef vector<int>::const_iterator vint_itr;
 typedef vector<vector<int> >::const_iterator vvint_itr;
 
+#define BIT 200
+
 
 //vector<int> people;
 //vector<int> combination;
@@ -22,79 +24,8 @@ typedef vector<vector<int> >::const_iterator vvint_itr;
 
 //as you can see, everything is public for now as I am creating this in 3 hours before the game.
 //I will add appropriate abstraction/encapsulation once I get the algorithm correct.
-class Player {
-public:
-    Player(){}
-    Player(string n,float pts,string pos,float sal):name(n),points(pts),position(pos), salary(sal){}
 
-    string name;
-    float points;
-    string position;
-    float salary;
-};
 
-class Team {
-public:
-   Team(const vector<Player> & p):parray(p){
-	players.clear();
-	totalpoints=0.0;
-	totalsalary=0.0;
-   }
-
-   float getPoints() { 
-	   return totalpoints; 
-   }
-
-   float points(){
-	   for(vint_sz i=0; i < players.size();i++)
-		   totalpoints+=parray[players[i]].points;
-
-	  return totalpoints;
-   }
-
-   float salary(){
-	   for(vint_sz i=0; i < players.size();i++)
-	 	totalsalary+=parray[players[i]].salary;
-
-	   return totalsalary;
-   }
-
-   void printinfo(){
-	   cout<<"======"<<endl;
-	   cout<<"points: "<<totalpoints<<endl;
-	   cout<<"salary: "<<totalsalary<<endl;
-
-	   cout<<"members:"<<endl;
-	   for (vint_sz i=0; i <players.size();i++){
-	   	   const Player & p=parray[players[i]];
-		   cout<<p.position<<": " <<p.name<<endl;
-	   }
-
-   }
-
-   void engagebits(){
-	   for(vint_sz i=0; i < players.size(); i++){
-		   assert(players[i] < bs.size());
-		   bs.set(players[i]);
-	   }
-
-   }
-
-   bitset<200> getbs(void) const {
-	   return bs;
-   }
-   
-   int diff(const Team * t) {
-	   return (bs | t->getbs()).count();
-   }
-
-   vector<int> players; //contains index to players
-   float totalpoints;
-   float totalsalary;
-   const vector<Player> & parray;
-   bitset<200> bs;//bit set for players
-};
- 
   vector<Player> players;
   vector<Team *> teams;
 
@@ -262,12 +193,12 @@ void Hedge(vector<Team *>& teams, vector<Team *>& a_list){
 
 	a_list.push_back(teams[0]);
 
-	int unique_players = 10;//there are currently 10 unique players
+	//int unique_players = 10;//there are currently 10 unique players
 	unsigned int standard=8;//we want another 10 unique playeres to join the group
 
 	for (vector<Team *>::size_type i=1; i < teams.size(); i++){//1-pass only
-		bitset<200> current=0;
-		bitset<200> newteam=teams[i]->getbs();
+		bitset<BIT> current=0;
+		bitset<BIT> newteam=teams[i]->getbs();
 
 		for (vector<Team *>::size_type j=0; j < a_list.size(); j++){
 			current |= a_list[j]->getbs();
@@ -292,9 +223,11 @@ int main() {
   vector<int> source;
   vector<int> tmp;//temporary storage needed by algorithm
 
-  int cutoff = 100;//limit combinations based on value;
+  int cutoff = 50;//limit combinations based on value;
+  int num_threads=4;
 
   vector<Team *> a_list;
+  vector<vector<Team *> > teams_omp;
 
   vector<int> Ce;
   vector<int> SF;
@@ -380,43 +313,45 @@ int main() {
   
   cout<<"iterating ... "<<endl; 
 
-  #pragma omp parallel for
-  for (vvint_itr i = Ce_comb.begin(); i != Ce_comb.end();i++){
-  	for (vvint_itr j = SF_comb.begin(); j != SF_comb.end();j++){
-  		for (vvint_itr k = SG_comb.begin(); k != SG_comb.end();k++){
-  			for (vvint_itr l = PF_comb.begin(); l != PF_comb.end();l++){
-  				for (vvint_itr m = PG_comb.begin(); m != PG_comb.end();m++){
+  teams_omp.resize(PF_comb.size());
+  //omp_set_num_threads(4);
+  for (vvint_sz i = 0;i < Ce_comb.size(); i++){
+  	for (vvint_sz j = 0; j < SF_comb.size(); j++){
+  		for (vvint_sz k = 0; k < SG_comb.size() ; k++){
+  			#pragma omp parallel for 
+  			for (vvint_sz l = 0;l < PF_comb.size() ;l++){
+  				for (vvint_sz m = 0 ; m < PG_comb.size() ;m++){
 					//5 for loops here for each position
 					Team *t = new Team(players);
 
 					//Centers
-					for(vint_itr n = i->begin(); n != i->end(); n++)
-						t->players.push_back(*n);
+					for(vint_sz n = 0; n < Ce_comb[i].size(); n++)
+						t->players.push_back(Ce_comb[i][n]);
 
 					//SF
-					for(vint_itr n = j->begin(); n != j->end(); n++)
-						t->players.push_back(*n);
+					for(vint_sz n = 0; n < SF_comb[j].size(); n++)
+						t->players.push_back(SF_comb[j][n]);
 
 					//SG
-					for(vint_itr n = k->begin(); n != k->end(); n++)
-						t->players.push_back(*n);
+					for(vint_sz n = 0; n < SG_comb[k].size(); n++)
+						t->players.push_back(SG_comb[k][n]);
 
 					//PF
-					for(vint_itr n = l->begin(); n != l->end(); n++)
-						t->players.push_back(*n);
+					for(vint_sz n = 0; n < PF_comb[l].size(); n++)
+						t->players.push_back(PF_comb[l][n]);
 
 					//PG
-					for(vint_itr n = m->begin(); n != m->end(); n++)
-						t->players.push_back(*n);
+					for(vint_sz n = 0; n < PG_comb[m].size(); n++)
+						t->players.push_back(PG_comb[m][n]);
 
 					float salary = t->salary();
 					float points = t->points();
 
 
-					if (points > 250.0 && salary<=60000 && salary > 58500){
+					if (points > 250.0 && salary<=60000 && salary > 59000){
 						//t->printinfo();
-//						#pragma omp atomic
-						teams.push_back(t);
+						//#pragma omp critical
+						teams_omp[l].push_back(t);
 						//bins[int((points-300)/10)]++;
 					}
 					else 
@@ -425,13 +360,16 @@ int main() {
 			}
 		}
 	}
-//	cout<<"%\r";
-//	cout.flush();
+	//progress_bar((teamsize/Ce_comb.size())/teamsize, teams.size());
 	progress_bar((teamsize/Ce_comb.size())/teamsize, teams.size());
-//	cout<<endl;
   }
   cout<<endl;
- //*/
+
+  for(vector<vector<Team *> >::size_type i=0; i < teams_omp.size();i++){
+	  copy(teams_omp[i].begin(), teams_omp[i].end(), back_inserter(teams));
+  }
+
+
   cout<<"There are "<<teams.size()<<" possible teams"<<endl;
 
   cout<<"sorting "<< teams.size()<<" teams .. "<<endl;
@@ -470,6 +408,10 @@ int main() {
   cout<<"Hedging ..."<<endl;
   Hedge(teams,a_list);
  
+
+  for (vector<Team *>::size_type i=0; i < teams.size(); i++){
+	  delete teams[i];
+  }
 
   return 0;
 }
