@@ -25,8 +25,8 @@ typedef vector<vector<int> >::const_iterator vvint_itr;
 //I will add appropriate abstraction/encapsulation once I get the algorithm correct.
 
 
-  vector<Player> players;
-  vector<Team *> teams;
+vector<Player> players;
+vector<Team *> teams;
 
 void pretty_print(const vector<int>& v) {
   static int count = 0;

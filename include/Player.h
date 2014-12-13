@@ -11,10 +11,10 @@ public:
     explicit Player(){}
     Player(string n,float pts,string pos,float sal);
 
-    inline float getPoints(){ return points; }
-    inline float getSalary(){ return salary; }
-    inline string getName(){ return name; }
-    inline string pos() { return position; }
+    inline const float & getPoints() const { return points; }
+    inline const float & getSalary() const { return salary; }
+    inline const string & getName() const { return name; }
+    inline const string & getPos() const { return position; }
 
 private:
     string name;

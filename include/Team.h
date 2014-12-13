@@ -4,7 +4,9 @@
 #include<iostream>
 #include<vector>
 #include<bitset>
+#include<cassert>
 #include "Player.h"
+#include "datatypes.h"
 
 using std::vector;
 using std::cout;
@@ -15,10 +17,15 @@ public:
    explicit Team();
    Team(const vector<Player> & p); 
 
-   float getPoints();
-   float points();
-   float totalSalary();
-   void  printInfo();
+   float getPoints() const;
+   float points() const;
+   float totalSalary() const;
+   void  printInfo() const;
+   bitset<BIT> getbs(void) const;
+   int diff(const Team * t) const;
+
+   void addPlayer(int player_idx);// adds player to team
+   void engagebits();
 
 private:
 
@@ -26,14 +33,11 @@ private:
    float totalpoints;
    float totalsalary;
    const vector<Player> & parray;
-   bitset<BIT> bs;//bit set for players
+   bitset<BIT> bs;//bit set for players, used to calculate how 1 team is different from another
+
 };
  
 	
 
 #endif
-
-#include<vector>
-#include "Player.h"
-
 
