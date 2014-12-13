@@ -1,18 +1,25 @@
+#ifndef TEAM_H
+#define TEAM_H
+
+#include<iostream>
 #include<vector>
+#include<bitset>
 #include "Player.h"
 
 using std::vector;
 using std::cout;
 
 class Team {
+
 public:
-   Team(const vector<Player> & p):parray(p){
-	players.clear();
-	totalpoints=0.0;
-	totalsalary=0.0;
-   }
+   explicit Team();
+   Team(const vector<Player> & p); 
 
    float getPoints();
+   float points();
+   float totalSalary();
+   void  printInfo();
+
 private:
 
    vector<char> players; //contains index to players
@@ -22,3 +29,11 @@ private:
    bitset<BIT> bs;//bit set for players
 };
  
+	
+
+#endif
+
+#include<vector>
+#include "Player.h"
+
+

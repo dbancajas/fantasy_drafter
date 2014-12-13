@@ -15,7 +15,6 @@ typedef vector<vector<int> >::size_type vvint_sz;
 typedef vector<int>::const_iterator vint_itr;
 typedef vector<vector<int> >::const_iterator vvint_itr;
 
-#define BIT 200
 
 
 //vector<int> people;

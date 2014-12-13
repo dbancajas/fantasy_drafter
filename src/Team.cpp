@@ -1,5 +1,14 @@
 #include "Team.h"
 
+
+Team::Team(const vector<Player> & p):parray(p){
+	players.clear();
+	totalpoints=0.0;
+	totalsalary=0.0;
+}
+
+
+
 float 
 Team::getPoints() { 
 	return totalpoints; 
@@ -14,7 +23,7 @@ Team::points(){
 }
 
 float 
-Team::salary(){
+Team::totalSalary(){
    for(vint_sz i=0; i < players.size();i++)
 	totalsalary+=parray[players[i]].salary;
 
@@ -22,7 +31,7 @@ Team::salary(){
 }
 
 void 
-Team::printinfo(){
+Team::printInfo(){
 	   cout<<"======"<<endl;
 	   cout<<"points: "<<totalpoints<<endl;
 	   cout<<"salary: "<<totalsalary<<endl;
