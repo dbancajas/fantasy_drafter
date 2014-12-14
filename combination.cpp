@@ -177,7 +177,7 @@ void csv_reader(vector<Player> & players, string datafile, int multiplier){
 		p.position = cell;
   	    }
 	    else if (i==3){
-		//cell = cell.substr(0, cell.size()); //need to fix this for rotog
+		//cell = cell.substr(0, cell.size()-1); //need to fix this for rotogrinders
 		cell = cell.substr(0, cell.size());
 		p.salary = atof(cell.c_str())*multiplier;
 	    }
