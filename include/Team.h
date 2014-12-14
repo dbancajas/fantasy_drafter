@@ -17,9 +17,8 @@ public:
    explicit Team();
    Team(const vector<Player> & p); 
 
-   float getPoints() const;
-   float points() const;
-   float totalSalary() const;
+   inline float getPoints() const { return totalpoints; }
+   inline float totalSalary() const { return totalsalary; }
    void  printInfo() const;
    bitset<BIT> getbs(void) const;
    int diff(const Team * t) const;

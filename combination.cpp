@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <bitset>
 #include <omp.h>
+#include <string.h>
 
 using namespace std;
 
@@ -15,6 +16,7 @@ typedef vector<vector<int> >::size_type vvint_sz;
 typedef vector<int>::const_iterator vint_itr;
 typedef vector<vector<int> >::const_iterator vvint_itr;
 
+#define BIT 250
 
 
 //vector<int> people;
@@ -23,10 +25,86 @@ typedef vector<vector<int> >::const_iterator vvint_itr;
 
 //as you can see, everything is public for now as I am creating this in 3 hours before the game.
 //I will add appropriate abstraction/encapsulation once I get the algorithm correct.
+class Player {
+public:
+    Player(){}
+    Player(string n,float pts,string pos,float sal):name(n),points(pts),position(pos), salary(sal){}
 
+    string name;
+    float points;
+    string position;
+    float salary;
+};
 
-vector<Player> players;
-vector<Team *> teams;
+class Team {
+public:
+   Team(const vector<Player> & p):parray(p){
+	players.clear();
+	totalpoints=0.0;
+	totalsalary=0.0;
+   }
+
+   float getPoints() { 
+	   return totalpoints; 
+   }
+
+   float points(){
+	   for(vint_sz i=0; i < players.size();i++)
+		   totalpoints+=parray[players[i]].points;
+
+	  return totalpoints;
+   }
+
+   float salary(){
+	   for(vint_sz i=0; i < players.size();i++)
+	 	totalsalary+=parray[players[i]].salary;
+
+	   return totalsalary;
+   }
+
+   void printinfo(){
+	   cout<<"======"<<endl;
+	   cout<<"points: "<<totalpoints<<endl;
+	   cout<<"salary: "<<totalsalary<<endl;
+
+	   cout<<"members:"<<endl;
+	   for (vint_sz i=0; i <players.size();i++){
+	   	   const Player & p=parray[players[i]];
+		   string tabs = p.name.length()<12? "\t\t":"\t";
+		   float  value = p.points/p.salary * 1000.0;
+		   cout<<p.position<<": " <<p.name<<tabs<<p.points<<"\t$"<<p.salary<<"\t"<<value<< endl;
+	   }
+
+   }
+
+   void engagebits(){
+	   for(vint_sz i=0; i < players.size(); i++){
+		   assert(players[i] < bs.size());
+		   //if (players[i] < bs.size()){
+//
+//		   }
+		   bs.set(players[i]);
+	   }
+
+   }
+
+   bitset<BIT> getbs(void) const {
+	   return bs;
+   }
+   
+   int diff(const Team * t) {
+	   return (bs | t->getbs()).count();
+   }
+
+   vector<unsigned char> players; //contains index to players
+   float totalpoints;
+   float totalsalary;
+   const vector<Player> & parray;
+   bitset<BIT> bs;//bit set for players
+};
+ 
+  vector<Player> players;
+  vector<Team *> teams;
 
 void pretty_print(const vector<int>& v) {
   static int count = 0;
@@ -75,8 +153,10 @@ void print_all(const vector<vector<int> > & combs){
 	}
 }
 
-void csv_reader(vector<Player> & players){
-    std::ifstream  data("projections.csv");
+void csv_reader(vector<Player> & players, string datafile, int multiplier){
+    //std::ifstream  data("data/projections.csv");
+    //std::ifstream  data("data/12-13-2014_rotowire.csv");
+    std::ifstream  data(datafile.c_str());
 
 
     std::string line;
@@ -97,8 +177,9 @@ void csv_reader(vector<Player> & players){
 		p.position = cell;
   	    }
 	    else if (i==3){
-		cell = cell.substr(0, cell.size()-1);
-		p.salary = atof(cell.c_str())*1000.0;
+		//cell = cell.substr(0, cell.size()); //need to fix this for rotog
+		cell = cell.substr(0, cell.size());
+		p.salary = atof(cell.c_str())*multiplier;
 	    }
 	    else if (i==4){
 		p.points = atof(cell.c_str());
@@ -109,6 +190,9 @@ void csv_reader(vector<Player> & players){
         }
 	players.push_back(p);
 	//cout<<endl;
+#ifdef DEBUG
+	cout<<p.name<<":"<<p.salary<<" "<<p.points<<endl;
+#endif
     }
 
 }
@@ -192,8 +276,8 @@ void Hedge(vector<Team *>& teams, vector<Team *>& a_list){
 
 	a_list.push_back(teams[0]);
 
-	//int unique_players = 10;//there are currently 10 unique players
-	unsigned int standard=8;//we want another 10 unique playeres to join the group
+	int unique_players = 10;//there are currently 10 unique players
+	unsigned int standard=7;//we want another 10 unique playeres to join the group
 
 	for (vector<Team *>::size_type i=1; i < teams.size(); i++){//1-pass only
 		bitset<BIT> current=0;
@@ -216,13 +300,39 @@ void Hedge(vector<Team *>& teams, vector<Team *>& a_list){
 	  }
 }
 
-int main() {
+enum PARAM { MULT, DATAFILE,  INVALID_PARAM };
+
+struct config {
+	int mult;
+	string datafile;
+};
+
+config  parse_args(int argc, char * argv[]){
+	string m = "--multiplier";
+	string n = "--datafile";
+
+	config a;
+
+	for (int i = 0; i < argc; i++){
+		if (strcmp(argv[i],m.c_str())==0){
+			assert(i+1<argc); //see if there is an integer after
+			a.mult = atoi(argv[i+1]);  
+		}
+		else if (DATAFILE && strcmp(argv[i],n.c_str())==0){
+			assert(i+1<argc); //see if there is an integer after
+			a.datafile = string(argv[i+1]);
+		}
+	}
+	return a;
+}
+
+int main(int argc, char * argv[]) {
   //int n = 5, k = 3;
   vector< vector<int> > combs;
   vector<int> source;
   vector<int> tmp;//temporary storage needed by algorithm
 
-  int cutoff = 50;//limit combinations based on value;
+  int cutoff = 60;//limit combinations based on value;
   int num_threads=4;
 
   vector<Team *> a_list;
@@ -242,6 +352,19 @@ int main() {
   vector<vector<int> > PF_comb;
   vector<vector<int> > PG_comb;
 
+  config conf = parse_args(argc,argv);
+  int multiplier=1;
+
+  if (argc < 2)
+	  multiplier=1;
+  else 
+	  multiplier = conf.mult;
+	  
+  assert(multiplier>0);
+	  
+  string datafile=conf.datafile;;
+  assert(datafile.length()>0);
+		 
 
 
   //for (int i = 0; i < n; ++i) { source.push_back(i*3); }
@@ -251,7 +374,7 @@ int main() {
 
   //Scan Player
   //
-  csv_reader(players);
+  csv_reader(players,datafile,multiplier);
   //Segrate Positions
   for (vector<int>::size_type  i=0; i < players.size();i++){
 	if (players[i].position == "C")

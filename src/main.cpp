@@ -6,6 +6,7 @@
 #include <cassert>
 #include <algorithm>
 #include <bitset>
+#include <random>
 //#include <omp.h>
 
 #include "datatypes.h"
@@ -65,7 +66,8 @@ void print_all(const vector<vector<int> > & combs){
 }
 
 void csv_reader(vector<Player> & players){
-    std::ifstream  data("data/projections.csv");
+    //std::ifstream  data("data/projections.csv");
+    std::ifstream  data("data/12-13-2014_rotowire.csv");
 
 
     std::string line;
@@ -396,6 +398,8 @@ void CombinatorialApproach(PosContainers & PC, UnifiedPlayers & UP) { //this is 
 
 }
 
+void MonteCarlo(UnifiedPlayers & UP);
+
 int main() {
   //int n = 5, k = 3;
   vector< vector<int> > combs;
@@ -454,7 +458,132 @@ int main() {
   UP.PG = &PG;
   UP.SG = &SG;
   
-  CombinatorialApproach(PosCon, UP);
+  //CombinatorialApproach(PosCon, UP);
+  MonteCarlo(UP);
 
   return 0;
+}
+
+float totalpoints(int plrs[]){ //no checking here
+	float total=0.0;
+
+	for(int i=0; i < 9; i++){
+		total+=players[plrs[i]].getPoints();
+	}
+	return total;
+
+}
+
+float totalsalary(int plrs[]){ //no checking here
+	float total=0.0;
+
+	for(int i=0; i < 9; i++){
+		total+=players[plrs[i]].getSalary();
+	}
+	return total;
+
+} 
+
+int randnum(int a){ //returns a number number from [0,a)
+
+	static std::random_device rd;
+	static std::mt19937 mt(rd());
+
+	static std::uniform_real_distribution<double> dist(0, 1);
+
+	return static_cast<int>(dist(mt)*a);
+}
+
+void MonteCarlo(UnifiedPlayers & UP){
+
+	#define SAMPLES 100000000 //# of samples
+	//#define SAMPLES 10000 //# of samples
+	#define SCORE 255 //score we want
+	#define SLIMIT 60000
+	
+	float maxscore=-1.0;
+
+	vector<int> & Ce = *UP.Ce;
+	vector<int> & SF = *UP.SF;
+	vector<int> & PF = *UP.PF;
+	vector<int> & PG = *UP.PG;
+	vector<int> & SG = *UP.SG;
+
+	unsigned int csz=Ce.size();
+	unsigned int sfz=SF.size();
+	unsigned int pfz=PF.size();
+	unsigned int pgz=PG.size();
+	unsigned int sgz=SG.size();
+
+	cout<<"stats:"<<endl;
+	cout<<"Centers: "<<csz<<endl;
+	cout<<"SF: "<<sfz<<endl;
+	cout<<"PF: "<<pfz<<endl;
+	cout<<"PG: "<<pgz<<endl;
+	cout<<"SG: "<<sgz<<endl;
+
+	int i=0;
+	int players2[9];
+
+	short ph;//place holder
+	short before;
+
+	while (i++ < SAMPLES){
+		//Centeres
+		players2[0]=Ce[randnum(csz)];
+
+		//SF
+		before = randnum(sfz);
+		players2[1]=SF[before];
+		while ((ph = randnum(sfz)) == before); //we do + 1 because there is chance ph = 0
+		players2[2]=SF[ph];
+		assert(players2[1] != players2[2]);
+
+		//PF
+		before = randnum(pfz);
+		players2[3]=PF[before];
+		while ((ph = randnum(pfz)) == before); //we do + 1 because there is chance ph = 0
+		players2[4]=PF[ph];
+		assert(players2[3] != players2[4]);
+
+		//PG
+		before = randnum(pgz);
+		players2[5]=PG[before];
+		while ((ph = randnum(pgz)) == before); //we do + 1 because there is chance ph = 0
+		players2[6]=PG[ph];
+		assert(players2[5] != players2[6]);
+
+		//SG
+		before = randnum(sgz);
+		players2[7]=SG[before];
+		while ((ph = randnum(sgz)) == before); //we do + 1 because there is chance ph = 0
+		players2[8]=SG[ph];
+		assert(players2[8] != players2[7]);
+		
+#ifdef DEBUG
+		cout<<"player indices"<<endl;
+		for (int j=0; j < 9; j++)
+			cout<<players2[j]<<" ";
+		cout<<endl;
+#endif
+
+		if ( (totalpoints(players2) > maxscore) && (totalsalary(players2) <= (SLIMIT+1)) ) {
+			maxscore = totalpoints(players2);
+
+			cout<<"new max team score: "<<maxscore<<endl;
+			cout<<"new team salary: "<<totalsalary(players2)<<endl;
+			for (int j=0; j < 9; j++){
+				Player & p = players[players2[j]];
+				cout<<p.getPos()<<":"<<p.getName()<<" "<<p.getPoints()<<" "<<p.getSalary()<<endl;
+			}
+			cout<<endl;
+
+			cout<<"player indices"<<endl;
+			for (int j=0; j < 9; j++)
+				cout<<players2[j]<<" ";
+			cout<<endl;
+
+			cout<<"============="<<endl;
+		}
+	}
 }

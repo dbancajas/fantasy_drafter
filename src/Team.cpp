@@ -7,22 +7,18 @@ Team::Team(const vector<Player> & p):parray(p){
 	totalsalary=0.0;
 }
 
-
+/*
 float 
 Team::getPoints() const { 
 	return totalpoints; 
 }
 
-float 
-Team::points() const {
- 	return totalpoints;
-}
 
 float 
 Team::totalSalary() const {
    return totalsalary;
 }
-
+*/
 
 void 
 Team::printInfo() const {
