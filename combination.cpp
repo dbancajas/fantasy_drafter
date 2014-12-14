@@ -277,7 +277,7 @@ void Hedge(vector<Team *>& teams, vector<Team *>& a_list){
 	a_list.push_back(teams[0]);
 
 	int unique_players = 10;//there are currently 10 unique players
-	unsigned int standard=7;//we want another 10 unique playeres to join the group
+	unsigned int standard=5;//we want another 10 unique playeres to join the group
 
 	for (vector<Team *>::size_type i=1; i < teams.size(); i++){//1-pass only
 		bitset<BIT> current=0;
@@ -325,6 +325,9 @@ config  parse_args(int argc, char * argv[]){
 	}
 	return a;
 }
+//TODO:
+//Add option to disable player ID
+//
 
 int main(int argc, char * argv[]) {
   //int n = 5, k = 3;
